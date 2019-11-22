@@ -1,23 +1,41 @@
-
-apply plugin: 'groovy'
-apply plugin: 'maven'
+apply plugin: 'dev.gradleplugins.groovy-gradle-plugin'
+apply plugin: 'maven-publish'
 apply plugin: "com.gradle.plugin-publish"
+apply plugin: 'com.jfrog.artifactory'
 
 sourceCompatibility = 1.7
 
 buildscript {
     repositories {
         maven {
+            url 'https://artifactory.devops.wepay-inc.com/artifactory/libs-release'
+        }
+        maven {
             url "https://plugins.gradle.org/m2/"
         }
     }
     dependencies {
+        classpath 'dev.gradleplugins:gradle-plugin-development:0.0.21'
+        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.10.0'
         classpath "com.gradle.publish:plugin-publish-plugin:0.10.0"
     }
 }
 
 repositories {
     jcenter()
+}
+artifactory {
+    contextUrl = 'https://artifactory.devops.wepay-inc.com/artifactory/'
+    publish {
+        repoKey = 'libs-release'
+        defaults {
+            publications('mavenJava')
+            publications('pluginMaven')
+        }
+    }
+    resolve {
+        repoKey = 'libs-release'
+    }
 }
 
 group = 'com.dorongold.plugins'
@@ -47,22 +65,31 @@ dependencies {
         exclude module: 'groovy-all'
     }
     testCompile 'com.netflix.nebula:nebula-test:5.0.1'
+    testCompile 'commons-io:commons-io:2.5'
     testRuntime files(createClasspathManifest)
 }
 
-pluginBundle {
-    website = 'https://github.com/dorongold/gradle-task-tree'
-    vcsUrl = 'https://github.com/dorongold/gradle-task-tree.git'
-    description = "Gradle plugin that adds a 'taskTree' task that prints task dependency tree"
-    tags = ['task', 'tree', 'dependencies', 'dependency']
-
+gradlePlugin {
     plugins {
-        taskTreePlugin {
-            id = 'com.dorongold.task-tree'
-            displayName = 'Gradle Task Tree Plugin'
+        create("taskTreePlugin") {
+            id = "com.dorongold.task-tree"
+            implementationClass = "com.dorongold.gradle.tasktree.TaskTreePlugin"
         }
     }
 }
+//pluginBundle {
+//    website = 'https://github.com/dorongold/gradle-task-tree'
+//    vcsUrl = 'https://github.com/dorongold/gradle-task-tree.git'
+//    description = "Gradle plugin that adds a 'taskTree' task that prints task dependency tree"
+//    tags = ['task', 'tree', 'dependencies', 'dependency']
+//
+//    plugins {
+//        taskTreePlugin {
+//            id = 'com.dorongold.task-tree'
+//            displayName = 'Gradle Task Tree Plugin'
+//        }
+//    }
+//}
 
 test {
     testLogging {
